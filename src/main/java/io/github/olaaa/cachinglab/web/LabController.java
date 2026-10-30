@@ -45,6 +45,11 @@ public class LabController {
         source.setFailing(true);
     }
 
+    @PostMapping("/source/recover")
+    public void recoverSource() {
+        source.setFailing(false);
+    }
+
     @PostMapping("/reset")
     public void reset() {
         source.reset();

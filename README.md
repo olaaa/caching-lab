@@ -20,7 +20,7 @@ mvn test
 mvn spring-boot:run
 ```
 
-Spring Boot сам поднимет PostgreSQL из `compose.yaml`. Запросы для IntelliJ HTTP Client — в `http/catalog.http`, счётчик обращений к источнику — `GET /lab/stats`, сброс — `POST /lab/reset`.
+Spring Boot сам поднимет PostgreSQL из `compose.yaml`. Запросы для IntelliJ HTTP Client — в папке `http`, по файлу на сценарий, счётчик обращений к источнику — `GET /lab/stats`, сброс — `POST /lab/reset`.
 
 ## Устройство
 
@@ -39,15 +39,17 @@ Spring Boot сам поднимет PostgreSQL из `compose.yaml`. Запрос
 
 ## Этап 1. Локальный кэш
 
+Подробное описание каждого сценария и оценка, какие из них чаще встречаются в продакшене, — [docs/scenarios](docs/scenarios/README.md). Ниже — коротко.
+
 ### 1. Без кэша
 
-Тест: `Scenario1NoCacheTest`. Сервис: `NoCacheProductService`.
+Тест: `Scenario1NoCacheTest`. Сервис: `NoCacheProductService`. Подробно: [docs/scenarios/01-no-cache.md](docs/scenarios/01-no-cache.md), вручную: `http/01-no-cache.http`.
 
 Десять чтений — десять обращений к источнику. Точка отсчёта для остальных сценариев.
 
 ### 2. Cache-Aside на AsyncCache и доля попаданий
 
-Тест: `Scenario2CacheAsideTest`. Сервис: `CacheAsideProductService`.
+Тест: `Scenario2CacheAsideTest`. Сервис: `CacheAsideProductService`. Подробно: [docs/scenarios/02-cache-aside.md](docs/scenarios/02-cache-aside.md), вручную: `http/02-cache-aside.http`.
 
 Десять чтений — одно обращение, доля попаданий 0,9. В `AsyncCache` лежит не товар, а `CompletableFuture` с товаром. Статистику включает `recordStats()`, в Micrometer её отдаёт `CaffeineCacheMetrics.monitor` (метрика `cache.gets` с тегом `result`).
 
@@ -58,7 +60,7 @@ Spring Boot сам поднимет PostgreSQL из `compose.yaml`. Запрос
 
 ### 3. `@Cacheable` на `Mono` и вызов изнутри бина
 
-Тест: `Scenario3CacheableTest`. Сервисы: `AnnotatedProductService`, `ProductPriceQueries`.
+Тест: `Scenario3CacheableTest`. Сервисы: `AnnotatedProductService`, `ProductPriceQueries`. Подробно: [docs/scenarios/03-cacheable.md](docs/scenarios/03-cacheable.md), вручную: `http/03-cacheable.http`.
 
 С Spring Framework 6.1 `@Cacheable` умеет кэшировать значение `Mono` и `Flux`, а не сам объект `Mono`. Для Caffeine нужен `CaffeineCacheManager.setAsyncCacheMode(true)` — см. `CacheConfiguration`.
 
@@ -66,13 +68,13 @@ Spring Boot сам поднимет PostgreSQL из `compose.yaml`. Запрос
 
 ### 4. TTL и устаревание
 
-Тест: `Scenario4TimeToLiveTest`.
+Тест: `Scenario4TimeToLiveTest`. Подробно: [docs/scenarios/04-time-to-live.md](docs/scenarios/04-time-to-live.md), вручную: `http/04-time-to-live.http`.
 
 Цена в БД меняется в обход кэша. Пока не истёк TTL (`expireAfterWrite`, 5 минут), кэш отдаёт старую цену. TTL — верхняя граница того, насколько устаревшими могут быть данные, если инвалидации нет или она потерялась.
 
 ### 5. Инвалидация до коммита и после
 
-Тест: `Scenario5InvalidationTest`. Сервис: `ProductPriceService`.
+Тест: `Scenario5InvalidationTest`. Сервис: `ProductPriceService`. Подробно: [docs/scenarios/05-invalidation.md](docs/scenarios/05-invalidation.md), вручную: `http/05-invalidation.http`.
 
 - Удалить из кэша до коммита — ошибка. Параллельное чтение между удалением и коммитом загружает из БД старую цену и кладёт её в кэш. После коммита в БД новая цена, в кэше старая — до конца TTL.
 - Удалить после коммита — правильно. Даже если кто-то успел прочитать старую цену во время транзакции, удаление после коммита её убирает.
@@ -83,7 +85,7 @@ Spring Boot сам поднимет PostgreSQL из `compose.yaml`. Запрос
 
 ### 6. Лавина промахов
 
-Тест: `Scenario6StampedeTest`. Сервисы: `NaiveCacheAsideProductService`, `CacheAsideProductService`.
+Тест: `Scenario6StampedeTest`. Сервисы: `NaiveCacheAsideProductService`, `CacheAsideProductService`. Подробно: [docs/scenarios/06-stampede.md](docs/scenarios/06-stampede.md), вручную: `http/06-stampede.http`.
 
 200 одновременных запросов к холодному ключу:
 
@@ -94,7 +96,7 @@ Spring Boot сам поднимет PostgreSQL из `compose.yaml`. Запрос
 
 ### 7. Refresh-Ahead и упавший источник
 
-Тест: `Scenario7RefreshAheadTest`. Сервис: `RefreshAheadProductService`.
+Тест: `Scenario7RefreshAheadTest`. Сервис: `RefreshAheadProductService`. Подробно: [docs/scenarios/07-refresh-ahead.md](docs/scenarios/07-refresh-ahead.md), вручную: `http/07-refresh-ahead.http`.
 
 `refreshAfterWrite` (1 минута) плюс `expireAfterWrite` (10 минут):
 
@@ -104,7 +106,7 @@ Spring Boot сам поднимет PostgreSQL из `compose.yaml`. Запрос
 
 ### 8. Отрицательный кэш
 
-Тест: `Scenario8NegativeCachingTest`. Сервис: `NegativeCachingProductService`.
+Тест: `Scenario8NegativeCachingTest`. Сервис: `NegativeCachingProductService`. Подробно: [docs/scenarios/08-negative-cache.md](docs/scenarios/08-negative-cache.md), вручную: `http/08-negative-cache.http`.
 
 Обычный `AsyncCache` не хранит `null`, поэтому запросы несуществующего товара каждый раз идут в источник (cache penetration). Отрицательный кэш хранит `Optional.empty()` с коротким TTL (30 секунд, через `Expiry.writing`), найденный товар — с длинным (10 минут).
 

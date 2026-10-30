@@ -8,6 +8,7 @@ import io.github.olaaa.cachinglab.scenario.CacheAsideProductService;
 import io.github.olaaa.cachinglab.scenario.NaiveCacheAsideProductService;
 import io.github.olaaa.cachinglab.scenario.NegativeCachingProductService;
 import io.github.olaaa.cachinglab.scenario.NoCacheProductService;
+import io.github.olaaa.cachinglab.scenario.ProductPriceQueries;
 import io.github.olaaa.cachinglab.scenario.ProductPriceService;
 import io.github.olaaa.cachinglab.scenario.RefreshAheadProductService;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,11 @@ public class ProductController {
         NO_CACHE, CACHE_ASIDE, NAIVE, ANNOTATED, REFRESH_AHEAD, NEGATIVE
     }
 
+    /* Сценарий 3: цена через вызов изнутри того же бина или через другой бин. */
+    public enum PriceVia {
+        SELF_INVOCATION, OTHER_BEAN
+    }
+
     public record PriceChange(BigDecimal price) {
     }
 
@@ -38,6 +44,7 @@ public class ProductController {
     private final RefreshAheadProductService refreshAheadProductService;
     private final NegativeCachingProductService negativeCachingProductService;
     private final ProductPriceService productPriceService;
+    private final ProductPriceQueries productPriceQueries;
 
     public ProductController(NoCacheProductService noCacheProductService,
                              CacheAsideProductService cacheAsideProductService,
@@ -45,7 +52,8 @@ public class ProductController {
                              AnnotatedProductService annotatedProductService,
                              RefreshAheadProductService refreshAheadProductService,
                              NegativeCachingProductService negativeCachingProductService,
-                             ProductPriceService productPriceService) {
+                             ProductPriceService productPriceService,
+                             ProductPriceQueries productPriceQueries) {
         this.noCacheProductService = noCacheProductService;
         this.cacheAsideProductService = cacheAsideProductService;
         this.naiveCacheAsideProductService = naiveCacheAsideProductService;
@@ -53,6 +61,7 @@ public class ProductController {
         this.refreshAheadProductService = refreshAheadProductService;
         this.negativeCachingProductService = negativeCachingProductService;
         this.productPriceService = productPriceService;
+        this.productPriceQueries = productPriceQueries;
     }
 
     @GetMapping("/{id}")
@@ -67,6 +76,16 @@ public class ProductController {
             case NEGATIVE -> negativeCachingProductService.findById(id);
         };
         return product.map(ResponseEntity::ok).defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/price")
+    public Mono<ResponseEntity<BigDecimal>> findPrice(@PathVariable long id,
+                                                      @RequestParam(defaultValue = "OTHER_BEAN") PriceVia via) {
+        Mono<BigDecimal> price = switch (via) {
+            case SELF_INVOCATION -> annotatedProductService.findPrice(id);
+            case OTHER_BEAN -> productPriceQueries.findPrice(id);
+        };
+        return price.map(ResponseEntity::ok).defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}/price")

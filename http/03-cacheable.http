@@ -1,0 +1,22 @@
+### Сценарий 3. @Cacheable на Mono. Подробно: docs/scenarios/03-cacheable.md
+
+### 1. Сбросить счётчик источника и кэши
+POST http://localhost:8080/lab/reset
+
+### 2. Товар через @Cacheable. Выполните несколько раз
+GET http://localhost:8080/products/1?via=ANNOTATED
+
+### 3. sourceCalls = 1
+GET http://localhost:8080/lab/stats
+
+### 4. Ловушка: цена через вызов изнутри того же бина. Выполните несколько раз
+GET http://localhost:8080/products/1/price?via=SELF_INVOCATION
+
+### 5. sourceCalls растёт на каждый вызов, хотя товар уже в кэше
+GET http://localhost:8080/lab/stats
+
+### 6. Та же цена через другой бин. Выполните несколько раз
+GET http://localhost:8080/products/1/price?via=OTHER_BEAN
+
+### 7. sourceCalls больше не растёт
+GET http://localhost:8080/lab/stats

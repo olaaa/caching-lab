@@ -1,0 +1,22 @@
+### Сценарий 7. Refresh-Ahead. Подробно: docs/scenarios/07-refresh-ahead.md
+
+### 1. Сбросить счётчик источника и кэши
+POST http://localhost:8080/lab/reset
+
+### 2. Загрузить товар в кэш
+GET http://localhost:8080/products/1?via=REFRESH_AHEAD
+
+### 3. Уронить источник
+POST http://localhost:8080/lab/source/fail
+
+### 4. Через минуту после шага 2: ответ есть, старое значение; в логе приложения — WARN о неудачной перезагрузке
+GET http://localhost:8080/products/1?via=REFRESH_AHEAD
+
+### 5. sourceCalls растёт: каждое чтение после минуты пробует перезагрузить запись
+GET http://localhost:8080/lab/stats
+
+### 6. Через 10 минут после шага 2: запись истекла, ответ 500 — ошибка источника дошла до клиента
+GET http://localhost:8080/products/1?via=REFRESH_AHEAD
+
+### 7. Поднять источник
+POST http://localhost:8080/lab/source/recover

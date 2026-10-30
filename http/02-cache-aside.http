@@ -1,0 +1,16 @@
+### Сценарий 2. Cache-Aside на AsyncCache. Подробно: docs/scenarios/02-cache-aside.md
+
+### 1. Сбросить счётчик источника и кэши
+POST http://localhost:8080/lab/reset
+
+### 2. Прочитать товар через кэш. Выполните несколько раз: первый ответ медленнее, остальные из памяти
+GET http://localhost:8080/products/1?via=CACHE_ASIDE
+
+### 3. sourceCalls = 1, cacheAsideHitRate растёт с каждым чтением
+GET http://localhost:8080/lab/stats
+
+### 4. Те же попадания в Micrometer
+GET http://localhost:8080/actuator/metrics/cache.gets?tag=cache:products-cache-aside&tag=result:hit
+
+### 5. И промахи
+GET http://localhost:8080/actuator/metrics/cache.gets?tag=cache:products-cache-aside&tag=result:miss

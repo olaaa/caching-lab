@@ -1,0 +1,10 @@
+### Сценарий 6. Лавина промахов. Подробно: docs/scenarios/06-stampede.md
+### 200 одновременных запросов отправляются из терминала, команды — в документе сценария:
+### seq 200 | xargs -P 200 -I{} curl -s -o /dev/null "http://localhost:8080/products/2?via=NAIVE"
+### seq 200 | xargs -P 200 -I{} curl -s -o /dev/null "http://localhost:8080/products/2?via=CACHE_ASIDE"
+
+### 1. Сбросить перед каждой командой
+POST http://localhost:8080/lab/reset
+
+### 2. После команды: для NAIVE sourceCalls заметно больше 1, для CACHE_ASIDE — 1
+GET http://localhost:8080/lab/stats

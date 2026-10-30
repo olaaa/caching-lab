@@ -1,0 +1,26 @@
+### Сценарий 8. Отрицательный кэш. Подробно: docs/scenarios/08-negative-cache.md
+### Товар 404 создаём в обход приложения, из терминала в папке проекта:
+### docker compose exec postgres psql -U catalog -c "INSERT INTO product VALUES (404, 'Блендер', 4590.00)"
+### Убрать после опыта:
+### docker compose exec postgres psql -U catalog -c "DELETE FROM product WHERE id = 404"
+
+### 1. Сбросить счётчик источника и кэши
+POST http://localhost:8080/lab/reset
+
+### 2. Несуществующий товар через обычный кэш. Выполните пять раз — каждый раз 404
+GET http://localhost:8080/products/404?via=CACHE_ASIDE
+
+### 3. sourceCalls = 5: «нет» не запоминается
+GET http://localhost:8080/lab/stats
+
+### 4. Сбросить ещё раз
+POST http://localhost:8080/lab/reset
+
+### 5. Тот же товар через отрицательный кэш. Выполните пять раз
+GET http://localhost:8080/products/404?via=NEGATIVE
+
+### 6. sourceCalls = 1
+GET http://localhost:8080/lab/stats
+
+### 7. Выполните INSERT из терминала и повторите шаг 5: до 30 секунд по-прежнему 404, потом 200
+GET http://localhost:8080/products/404?via=NEGATIVE

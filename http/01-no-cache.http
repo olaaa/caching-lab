@@ -1,0 +1,10 @@
+### Сценарий 1. Без кэша. Подробно: docs/scenarios/01-no-cache.md
+
+### 1. Сбросить счётчик источника и кэши
+POST http://localhost:8080/lab/reset
+
+### 2. Прочитать товар без кэша. Выполните три-четыре раза
+GET http://localhost:8080/products/1?via=NO_CACHE
+
+### 3. sourceCalls равно числу чтений
+GET http://localhost:8080/lab/stats

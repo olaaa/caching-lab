@@ -1,0 +1,15 @@
+### Сценарий 4. TTL. Подробно: docs/scenarios/04-time-to-live.md
+### Цену меняем в обход приложения, прямо в БД, из терминала в папке проекта:
+### docker compose exec postgres psql -U catalog -c "UPDATE product SET price = 2990.00 WHERE id = 1"
+
+### 1. Сбросить счётчик источника и кэши
+POST http://localhost:8080/lab/reset
+
+### 2. Прочитать товар — он попадёт в кэш на 5 минут
+GET http://localhost:8080/products/1?via=CACHE_ASIDE
+
+### 3. Выполните UPDATE из терминала и повторите запрос: цена старая, пока не прошло 5 минут
+GET http://localhost:8080/products/1?via=CACHE_ASIDE
+
+### 4. Через 5 минут после шага 2: цена новая, sourceCalls = 2
+GET http://localhost:8080/lab/stats

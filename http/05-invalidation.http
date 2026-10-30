@@ -1,0 +1,20 @@
+### Сценарий 5. Инвалидация после коммита. Подробно: docs/scenarios/05-invalidation.md
+### Ошибочный порядок (удаление до коммита) воспроизводится только в тесте Scenario5InvalidationTest.
+
+### 1. Сбросить счётчик источника и кэши
+POST http://localhost:8080/lab/reset
+
+### 2. Прочитать товар — он в кэше
+GET http://localhost:8080/products/1?via=CACHE_ASIDE
+
+### 3. Изменить цену через приложение: коммит, затем удаление из кэша
+PUT http://localhost:8080/products/1/price
+Content-Type: application/json
+
+{"price": 1990.00}
+
+### 4. Новая цена сразу, без ожидания TTL
+GET http://localhost:8080/products/1?via=CACHE_ASIDE
+
+### 5. sourceCalls = 2: после удаления товар перечитан один раз
+GET http://localhost:8080/lab/stats
