@@ -1,0 +1,35 @@
+### Сбросить счётчик источника и все кэши
+POST http://localhost:8080/lab/reset
+
+### Сценарий 1. Без кэша — повторите несколько раз и посмотрите /lab/stats
+GET http://localhost:8080/products/1?via=NO_CACHE
+
+### Сценарий 2. Cache-Aside на AsyncCache
+GET http://localhost:8080/products/1?via=CACHE_ASIDE
+
+### Сценарий 3. @Cacheable на Mono
+GET http://localhost:8080/products/1?via=ANNOTATED
+
+### Сценарий 6. Наивный кэш — для сравнения с CACHE_ASIDE под нагрузкой
+GET http://localhost:8080/products/1?via=NAIVE
+
+### Сценарий 7. Refresh-Ahead
+GET http://localhost:8080/products/1?via=REFRESH_AHEAD
+
+### Сценарий 8. Отрицательный кэш: несуществующий товар
+GET http://localhost:8080/products/404?via=NEGATIVE
+
+### Сценарий 5. Смена цены: коммит, затем удаление из кэша
+PUT http://localhost:8080/products/1/price
+Content-Type: application/json
+
+{"price": 1990.00}
+
+### Сценарий 7. Уронить источник, чтобы увидеть, что Refresh-Ahead отвечает старым значением
+POST http://localhost:8080/lab/source/fail
+
+### Сколько раз дошли до источника, доля попаданий Cache-Aside
+GET http://localhost:8080/lab/stats
+
+### Метрики Caffeine через Micrometer
+GET http://localhost:8080/actuator/metrics/cache.gets?tag=cache:products-cache-aside&tag=result:hit
