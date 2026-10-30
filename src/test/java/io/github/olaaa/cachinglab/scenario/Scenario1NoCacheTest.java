@@ -56,10 +56,13 @@ class Scenario1NoCacheTest extends ScenarioTestSupport {
          * выполнился заново, в БД сходили два раза, и счётчик без defer (1) занижает число
          * обращений. Тест сверяет счётчик с фактом, а не с самим собой.
          */
-        Mono<Product> product = noCacheProductService.findById(KETTLE_ID);
+        Mono<Product> product = noCacheProductService.findById(KETTLE_ID); // вызов МЕТОДА один
 
+        // подписка первая
         assertThat(product.block().price()).isEqualByComparingTo(KETTLE_PRICE);
         repository.updatePrice(KETTLE_ID, NEW_PRICE).block();
+
+        // подписка вторая
         assertThat(product.block().price()).isEqualByComparingTo(NEW_PRICE);
 
         assertThat(source.callCount()).isEqualTo(2);
