@@ -1,5 +1,7 @@
 # Сценарий 7. Refresh-Ahead и упавший источник
 
+Refresh-Ahead — «упреждающее обновление», то есть обновление заранее: `refresh` — обновить, перечитать; `ahead` — заранее, наперёд. Популярная запись перечитывается из источника в фоне до того, как истечёт её срок, а покупатели тем временем получают старое значение без ожидания.
+
 Тест: `src/test/java/io/github/olaaa/cachinglab/scenario/Scenario7RefreshAheadTest.java`.
 Сервис: `RefreshAheadProductService` (`REFRESH_AFTER` = 1 минута, `EXPIRE_AFTER` = 10 минут).
 Ручная проверка: `http/07-refresh-ahead.http`.
