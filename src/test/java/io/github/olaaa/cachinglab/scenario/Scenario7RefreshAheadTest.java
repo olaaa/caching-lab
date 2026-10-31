@@ -1,16 +1,16 @@
 package io.github.olaaa.cachinglab.scenario;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-
-import java.math.BigDecimal;
-import java.time.Duration;
-
 import io.github.olaaa.cachinglab.catalog.SourceUnavailableException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import reactor.test.StepVerifier;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /* Сценарий 7. refreshAfterWrite: обновление в фоне и поведение при упавшем источнике. */
 class Scenario7RefreshAheadTest extends ScenarioTestSupport {
@@ -24,6 +24,13 @@ class Scenario7RefreshAheadTest extends ScenarioTestSupport {
      * поэтому запас не замедляет тест, а только защищает от ложного падения на медленной машине.
      */
     private static final Duration BACKGROUND_RELOAD_SLACK = Duration.ofSeconds(1);
+
+    /*
+     * Как часто Awaitility повторяет проверку. Совпадает со значением по умолчанию, но задан явно.
+     * Первая проверка — тоже через этот интервал: без явного pollDelay Awaitility берёт его
+     * равным pollInterval, поэтому pollDelay задан явно тем же значением.
+     */
+    private static final Duration POLL_INTERVAL = Duration.ofMillis(100);
 
     @Autowired
     RefreshAheadProductService refreshAheadProductService;
@@ -45,9 +52,12 @@ class Scenario7RefreshAheadTest extends ScenarioTestSupport {
                 .isEqualByComparingTo(KETTLE_PRICE);
 
         /* Фоновая перезагрузка — это одно обращение к источнику: его задержка плюс запас. */
-        await().atMost(sourceDelay.plus(BACKGROUND_RELOAD_SLACK)).untilAsserted(() ->
-                assertThat(refreshAheadProductService.findById(KETTLE_ID).block().price())
-                        .isEqualByComparingTo(NEW_PRICE));
+        await().atMost(sourceDelay.plus(BACKGROUND_RELOAD_SLACK))
+                .pollDelay(POLL_INTERVAL)
+                .pollInterval(POLL_INTERVAL)
+                .untilAsserted(() ->
+                        assertThat(refreshAheadProductService.findById(KETTLE_ID).block().price())
+                                .isEqualByComparingTo(NEW_PRICE));
         assertThat(source.callCount()).isEqualTo(2);
     }
 
