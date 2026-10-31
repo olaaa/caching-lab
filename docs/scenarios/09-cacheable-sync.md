@@ -81,6 +81,8 @@ return adapter.fromPublisher(Mono.fromFuture(
 
 `cacheableWithSyncCoalescesConcurrentMisses`: те же 200 чтений через `SyncCacheableProductService.findById` — одно обращение.
 
+Перевод имени: «`@Cacheable` с `sync` объединяет одновременные промахи». `coalesce` — объединять, сливать в одно (буквально «срастаться, сливаться»). Здесь это значит, что одновременные промахи по одному ключу превращаются в одну загрузку.
+
 `cacheableWithSyncStartsLoadingWithoutSubscription`:
 
 1. `AnnotatedProductService.findById(1)` без подписки — обращений 0.
