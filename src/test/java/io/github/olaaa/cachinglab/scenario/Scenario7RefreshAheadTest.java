@@ -9,6 +9,7 @@ import java.time.Duration;
 import io.github.olaaa.cachinglab.catalog.SourceUnavailableException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import reactor.test.StepVerifier;
 
 /* Сценарий 7. refreshAfterWrite: обновление в фоне и поведение при упавшем источнике. */
@@ -16,8 +17,20 @@ class Scenario7RefreshAheadTest extends ScenarioTestSupport {
 
     private static final BigDecimal NEW_PRICE = new BigDecimal("2790.00");
 
+    /*
+     * Запас сверх задержки источника на всё остальное, что входит в фоновую перезагрузку:
+     * очередь пула потоков Caffeine, SELECT в контейнер PostgreSQL, запись нового значения
+     * в колбэке future. Awaitility заканчивает ожидание, как только условие выполнено,
+     * поэтому запас не замедляет тест, а только защищает от ложного падения на медленной машине.
+     */
+    private static final Duration BACKGROUND_RELOAD_SLACK = Duration.ofSeconds(1);
+
     @Autowired
     RefreshAheadProductService refreshAheadProductService;
+
+    /* Задержка источника в тестах: 100 мс из ScenarioTestSupport, а не 50 мс из application.yml. */
+    @Value("${catalog.source.delay}")
+    Duration sourceDelay;
 
     @Test
     void readAfterRefreshIntervalGetsOldValueAndTriggersBackgroundReload() {
@@ -31,7 +44,8 @@ class Scenario7RefreshAheadTest extends ScenarioTestSupport {
                 .as("ответ сразу, без ожидания источника — пока старая цена")
                 .isEqualByComparingTo(KETTLE_PRICE);
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+        /* Фоновая перезагрузка — это одно обращение к источнику: его задержка плюс запас. */
+        await().atMost(sourceDelay.plus(BACKGROUND_RELOAD_SLACK)).untilAsserted(() ->
                 assertThat(refreshAheadProductService.findById(KETTLE_ID).block().price())
                         .isEqualByComparingTo(NEW_PRICE));
         assertThat(source.callCount()).isEqualTo(2);
