@@ -29,6 +29,20 @@ public class AnnotatedProductService {
     }
 
     /*
+     * То же, но с sync = true: одновременные промахи по одному ключу загружают значение один раз.
+     * Spring вызывает Cache.retrieve(key, valueLoader), CaffeineCache превращает его в
+     * AsyncCache.get(key, loader), и все ждут одну future.
+     *
+     * Ловушка: при sync = true кэш опрашивается и загрузка запускается в момент вызова метода,
+     * а не при подписке на Mono. В CacheAspectSupport стоит Mono.fromFuture(doRetrieve(...))
+     * без лямбды, а загрузчик подписывается на Mono метода через toFuture() сразу.
+     */
+    @Cacheable(cacheNames = CACHE_NAME, sync = true)
+    public Mono<Product> findByIdSync(long id) {
+        return source.load(id);
+    }
+
+    /*
      * Ловушка: вызов findById через this идёт мимо прокси Spring, поэтому кэш не работает,
      * и каждый вызов доходит до источника. Правильно — вызывать кэшируемый метод из другого
      * бина, как это делает ProductPriceQueries.

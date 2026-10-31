@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.LongFunction;
 import java.util.function.Supplier;
 
 import io.github.olaaa.cachinglab.ManualTicker;
@@ -19,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Import;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /*
  * Общая основа сценариев: один контекст Spring и один контейнер PostgreSQL на все тесты.
@@ -31,6 +34,7 @@ abstract class ScenarioTestSupport {
     static final long KETTLE_ID = 1;
     static final BigDecimal KETTLE_PRICE = new BigDecimal("2490.00");
     static final long MISSING_ID = 404;
+    static final int CONCURRENT_REQUESTS = 200;
 
     @Autowired
     ProductRepository repository;
@@ -68,6 +72,17 @@ abstract class ScenarioTestSupport {
      * может вернуть товар раньше, чем Caffeine запишет время. Если в этот промежуток
      * сдвинуть ManualTicker, запись получит время уже после сдвига и «помолодеет».
      */
+    /*
+     * 200 одновременных чтений одного холодного ключа (сценарии 3 и 6).
+     * flatMap подписывается на все 200 запросов сразу, не дожидаясь ответов.
+     */
+    static List<Product> readConcurrently(LongFunction<Mono<Product>> reader) {
+        return Flux.range(0, CONCURRENT_REQUESTS)
+                .flatMap(requestNumber -> reader.apply(KETTLE_ID), CONCURRENT_REQUESTS)
+                .collectList()
+                .block();
+    }
+
     static void awaitEntryWritten(Supplier<Optional<Duration>> ageOfEntry) {
         await().atMost(Duration.ofSeconds(5))
                 .until(() -> ageOfEntry.get().filter(age -> !age.isNegative()).isPresent());

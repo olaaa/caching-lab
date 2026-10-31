@@ -66,6 +66,8 @@ Spring Boot сам поднимет PostgreSQL из `compose.yaml`. Запрос
 
 Ловушка: `findPrice` вызывает `findById` через `this`, мимо прокси Spring, и кэш не работает — каждый вызов идёт в источник. Тот же вызов из другого бина (`ProductPriceQueries`) идёт через прокси и попадает в кэш.
 
+`sync = true`: без него 200 одновременных промахов вызывают метод 200 раз, с ним — один. Для `Mono` загрузка при `sync = true` начинается уже при вызове метода, без подписки.
+
 ### 4. TTL и устаревание
 
 Тест: `Scenario4TimeToLiveTest`. Подробно: [docs/scenarios/04-time-to-live.md](docs/scenarios/04-time-to-live.md), вручную: `http/04-time-to-live.http`.

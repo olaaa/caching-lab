@@ -26,7 +26,7 @@ import reactor.core.publisher.Mono;
 public class ProductController {
 
     public enum ReadVia {
-        NO_CACHE, CACHE_ASIDE, NAIVE, ANNOTATED, REFRESH_AHEAD, NEGATIVE
+        NO_CACHE, CACHE_ASIDE, NAIVE, ANNOTATED, ANNOTATED_SYNC, REFRESH_AHEAD, NEGATIVE
     }
 
     /* Сценарий 3: цена через вызов изнутри того же бина или через другой бин. */
@@ -72,6 +72,7 @@ public class ProductController {
             case CACHE_ASIDE -> cacheAsideProductService.findById(id);
             case NAIVE -> naiveCacheAsideProductService.findById(id);
             case ANNOTATED -> annotatedProductService.findById(id);
+            case ANNOTATED_SYNC -> annotatedProductService.findByIdSync(id);
             case REFRESH_AHEAD -> refreshAheadProductService.findById(id);
             case NEGATIVE -> negativeCachingProductService.findById(id);
         };
