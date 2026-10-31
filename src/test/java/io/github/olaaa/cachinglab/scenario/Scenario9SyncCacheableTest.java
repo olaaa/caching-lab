@@ -55,7 +55,10 @@ class Scenario9SyncCacheableTest extends ScenarioTestSupport {
                 .as("обращение к источнику без единой подписки")
                 .isEqualTo(1);
 
-        /* Обе подписки получают результат той же future, второй загрузки нет. */
+        /* Обе подписки получают результат той же future, второй загрузки нет.
+        * Закономерно, как и всё в реакторе: если метод выполнился при подписке, то
+        * при любом количестве подписок вернет одно и то же значение.
+        */
         assertThat(notSubscribedSync.block()).isNotNull();
         assertThat(notSubscribedSync.block()).isNotNull();
         assertThat(source.callCount()).isEqualTo(1);
