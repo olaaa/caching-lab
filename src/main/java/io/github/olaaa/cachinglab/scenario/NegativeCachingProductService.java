@@ -46,7 +46,7 @@ public class NegativeCachingProductService implements LabCache {
                                 .defaultIfEmpty(Optional.empty())
                                 .toFuture()
                 ), true)
-                .flatMap(Mono::justOrEmpty);
+                .flatMap(optional -> Mono.justOrEmpty(optional));
     }
 
     /*
