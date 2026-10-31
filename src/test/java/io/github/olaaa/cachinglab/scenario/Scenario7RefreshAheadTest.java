@@ -45,6 +45,7 @@ class Scenario7RefreshAheadTest extends ScenarioTestSupport {
         assertThat(source.callCount()).isEqualTo(2);
     }
 
+//    Упавшее обновление сохраняет старое значение до истечения срока
     @Test
     void failedRefreshKeepsOldValueUntilExpiry() {
         refreshAheadProductService.findById(KETTLE_ID).block();
@@ -56,7 +57,12 @@ class Scenario7RefreshAheadTest extends ScenarioTestSupport {
         assertThat(refreshAheadProductService.findById(KETTLE_ID).block().price())
                 .as("фоновая перезагрузка упала, но кэш отвечает старым значением")
                 .isEqualByComparingTo(KETTLE_PRICE);
-        await().atMost(Duration.ofSeconds(5)).until(() -> source.callCount() >= 2);
+        /*
+         * Два обращения к источнику: загрузка на первом промахе и фоновая перезагрузка, которую
+         * запустило чтение после REFRESH_AFTER. Во время ожидания к кэшу никто не обращается,
+         * поэтому счётчик не может уйти дальше двух.
+         */
+        await().atMost(Duration.ofSeconds(5)).until(() -> source.callCount() == 2);
         assertThat(refreshAheadProductService.findById(KETTLE_ID).block().price()).isEqualByComparingTo(KETTLE_PRICE);
 
         ticker.advance(RefreshAheadProductService.EXPIRE_AFTER);
