@@ -17,21 +17,6 @@ class Scenario7RefreshAheadTest extends ScenarioTestSupport {
 
     private static final BigDecimal NEW_PRICE = new BigDecimal("2790.00");
 
-    /*
-     * Запас сверх задержки источника на всё остальное, что входит в фоновую перезагрузку:
-     * очередь пула потоков Caffeine, SELECT в контейнер PostgreSQL, запись нового значения
-     * в колбэке future. Awaitility заканчивает ожидание, как только условие выполнено,
-     * поэтому запас не замедляет тест, а только защищает от ложного падения на медленной машине.
-     */
-    private static final Duration BACKGROUND_RELOAD_SLACK = Duration.ofSeconds(1);
-
-    /*
-     * Как часто Awaitility повторяет проверку. Совпадает со значением по умолчанию, но задан явно.
-     * Первая проверка — тоже через этот интервал: без явного pollDelay Awaitility берёт его
-     * равным pollInterval, поэтому pollDelay задан явно тем же значением.
-     */
-    private static final Duration POLL_INTERVAL = Duration.ofMillis(100);
-
     @Autowired
     RefreshAheadProductService refreshAheadProductService;
 
@@ -51,10 +36,9 @@ class Scenario7RefreshAheadTest extends ScenarioTestSupport {
                 .as("ответ сразу, без ожидания источника — пока старая цена")
                 .isEqualByComparingTo(KETTLE_PRICE);
 
-        /* Фоновая перезагрузка — это одно обращение к источнику: его задержка плюс запас. */
-        await().atMost(sourceDelay.plus(BACKGROUND_RELOAD_SLACK))
-                .pollDelay(POLL_INTERVAL)
-                .pollInterval(POLL_INTERVAL)
+        await().atMost(Duration.ofSeconds(1))
+                .pollDelay(sourceDelay)
+                .pollInterval(sourceDelay)
                 .untilAsserted(() ->
                         assertThat(refreshAheadProductService.findById(KETTLE_ID).block().price())
                                 .isEqualByComparingTo(NEW_PRICE));

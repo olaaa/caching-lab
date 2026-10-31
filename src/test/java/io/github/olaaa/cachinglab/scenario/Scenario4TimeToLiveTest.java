@@ -19,6 +19,7 @@ class Scenario4TimeToLiveTest extends ScenarioTestSupport {
     @Autowired
     CacheAsideProductService cacheAsideProductService;
 
+    // Кэш отдаёт устаревшее значение, пока не истечёт время жизни (TTL)
     @Test
     void cacheServesStaleValueUntilTimeToLiveExpires() {
         assertThat(cacheAsideProductService.findById(KETTLE_ID).block().price()).isEqualByComparingTo(KETTLE_PRICE);

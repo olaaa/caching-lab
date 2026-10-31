@@ -1,8 +1,5 @@
 package io.github.olaaa.cachinglab.scenario;
 
-import java.time.Duration;
-import java.util.Optional;
-
 import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Ticker;
@@ -13,6 +10,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
+import java.time.Duration;
+import java.util.Optional;
 
 /*
  * Сценарии 2, 4, 5 и 6. Cache-Aside вручную на AsyncCache Caffeine.
@@ -34,8 +34,8 @@ public class CacheAsideProductService implements LabCache {
         this.source = source;
         this.cache = Caffeine.newBuilder()
                 .ticker(cacheTicker)
-                .maximumSize(10_000)
-                .expireAfterWrite(TIME_TO_LIVE)
+                .maximumSize(10_000) // обязательно
+                .expireAfterWrite(TIME_TO_LIVE) // ttl обязательно
                 .recordStats()
                 .buildAsync();
         /* Метрики cache.gets, cache.puts, cache.evictions видны в /actuator/metrics. */
@@ -55,7 +55,13 @@ public class CacheAsideProductService implements LabCache {
          * Пустой Mono превращается в future с null — Caffeine такую запись не хранит,
          * поэтому отсутствующий товар каждый раз идёт в источник (сценарий 8).
          */
-        return Mono.fromFuture(() -> cache.get(id, (key, executor) -> source.load(key).toFuture()), true);
+        return Mono.fromFuture(() -> cache.get(id,
+ // загрузить и положить в кэш
+                        (key, executor) -> source.load(key)
+    // AsyncCache кладёт future в кэш сразу, до того как загрузка закончится, сц. 6
+                                .toFuture()
+                ),
+                true);
     }
 
     public void evict(long id) {
@@ -67,7 +73,8 @@ public class CacheAsideProductService implements LabCache {
      * время записи AsyncCache выставляет в момент завершения future, а не в момент запроса.
      */
     public Optional<Duration> ageOf(long id) {
-        return cache.synchronous().policy().expireAfterWrite().flatMap(expiration -> expiration.ageOf(id));
+        return cache.synchronous().policy().expireAfterWrite()
+                .flatMap(expiration -> expiration.ageOf(id));
     }
 
     /* Есть ли в кэше запись для ключа, в том числе ещё не завершённая future. */

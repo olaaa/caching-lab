@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration(proxyBeanMethods = false)
-@EnableCaching
+@EnableCaching // чтобы работала аннотация @Cacheable(CACHE_NAME)
 public class CacheConfiguration {
 
     /*

@@ -35,6 +35,7 @@ class Scenario6StampedeTest extends ScenarioTestSupport {
                 .isEqualTo(CONCURRENT_REQUESTS);
     }
 
+//    Асинхронный кэш объединяет одновременные промахи
     @Test
     void asyncCacheCoalescesConcurrentMisses() {
         List<Product> products = readConcurrently(cacheAsideProductService::findById);
