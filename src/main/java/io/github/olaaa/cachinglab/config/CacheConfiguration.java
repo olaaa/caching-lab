@@ -5,6 +5,7 @@ import java.time.Duration;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Ticker;
 import io.github.olaaa.cachinglab.scenario.AnnotatedProductService;
+import io.github.olaaa.cachinglab.scenario.SyncCacheableProductService;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
@@ -24,13 +25,14 @@ public class CacheConfiguration {
     }
 
     /*
-     * Менеджер для @Cacheable (сценарий 3). Без setAsyncCacheMode(true) Spring не умеет
+     * Менеджер для @Cacheable (сценарии 3 и 9). Без setAsyncCacheMode(true) Spring не умеет
      * кэшировать Mono и Flux в Caffeine: реактивный @Cacheable опирается на Cache.retrieve,
      * а его поддерживает только асинхронный режим.
      */
     @Bean
     CaffeineCacheManager cacheManager() {
-        var cacheManager = new CaffeineCacheManager(AnnotatedProductService.CACHE_NAME);
+        var cacheManager = new CaffeineCacheManager(AnnotatedProductService.CACHE_NAME,
+                SyncCacheableProductService.CACHE_NAME);
         cacheManager.setCaffeine(Caffeine.newBuilder()
                 .maximumSize(10_000)
                 .expireAfterWrite(Duration.ofMinutes(10))

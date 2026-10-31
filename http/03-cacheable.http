@@ -20,13 +20,3 @@ GET http://localhost:8080/products/1/price?via=OTHER_BEAN
 
 ### 7. sourceCalls больше не растёт
 GET http://localhost:8080/lab/stats
-
-### 8. sync = true. Одиночный запрос ведёт себя как ANNOTATED; разница видна на одновременных промахах —
-### команды curl в docs/scenarios/03-cacheable.md, раздел «Попробовать вручную»
-POST http://localhost:8080/lab/reset
-
-### 9. Товар через @Cacheable(sync = true)
-GET http://localhost:8080/products/2?via=ANNOTATED_SYNC
-
-### 10. sourceCalls = 1
-GET http://localhost:8080/lab/stats

@@ -73,7 +73,7 @@ abstract class ScenarioTestSupport {
      * сдвинуть ManualTicker, запись получит время уже после сдвига и «помолодеет».
      */
     /*
-     * 200 одновременных чтений одного холодного ключа (сценарии 3 и 6).
+     * 200 одновременных чтений одного холодного ключа (сценарии 6 и 9).
      * flatMap подписывается на все 200 запросов сразу, не дожидаясь ответов.
      */
     static List<Product> readConcurrently(LongFunction<Mono<Product>> reader) {

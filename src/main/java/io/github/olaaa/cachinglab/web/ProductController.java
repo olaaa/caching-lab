@@ -11,6 +11,7 @@ import io.github.olaaa.cachinglab.scenario.NoCacheProductService;
 import io.github.olaaa.cachinglab.scenario.ProductPriceQueries;
 import io.github.olaaa.cachinglab.scenario.ProductPriceService;
 import io.github.olaaa.cachinglab.scenario.RefreshAheadProductService;
+import io.github.olaaa.cachinglab.scenario.SyncCacheableProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +42,7 @@ public class ProductController {
     private final CacheAsideProductService cacheAsideProductService;
     private final NaiveCacheAsideProductService naiveCacheAsideProductService;
     private final AnnotatedProductService annotatedProductService;
+    private final SyncCacheableProductService syncCacheableProductService;
     private final RefreshAheadProductService refreshAheadProductService;
     private final NegativeCachingProductService negativeCachingProductService;
     private final ProductPriceService productPriceService;
@@ -50,6 +52,7 @@ public class ProductController {
                              CacheAsideProductService cacheAsideProductService,
                              NaiveCacheAsideProductService naiveCacheAsideProductService,
                              AnnotatedProductService annotatedProductService,
+                             SyncCacheableProductService syncCacheableProductService,
                              RefreshAheadProductService refreshAheadProductService,
                              NegativeCachingProductService negativeCachingProductService,
                              ProductPriceService productPriceService,
@@ -58,6 +61,7 @@ public class ProductController {
         this.cacheAsideProductService = cacheAsideProductService;
         this.naiveCacheAsideProductService = naiveCacheAsideProductService;
         this.annotatedProductService = annotatedProductService;
+        this.syncCacheableProductService = syncCacheableProductService;
         this.refreshAheadProductService = refreshAheadProductService;
         this.negativeCachingProductService = negativeCachingProductService;
         this.productPriceService = productPriceService;
@@ -72,7 +76,7 @@ public class ProductController {
             case CACHE_ASIDE -> cacheAsideProductService.findById(id);
             case NAIVE -> naiveCacheAsideProductService.findById(id);
             case ANNOTATED -> annotatedProductService.findById(id);
-            case ANNOTATED_SYNC -> annotatedProductService.findByIdSync(id);
+            case ANNOTATED_SYNC -> syncCacheableProductService.findById(id);
             case REFRESH_AHEAD -> refreshAheadProductService.findById(id);
             case NEGATIVE -> negativeCachingProductService.findById(id);
         };

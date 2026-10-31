@@ -1,0 +1,12 @@
+### Сценарий 9. @Cacheable(sync = true). Подробно: docs/scenarios/09-cacheable-sync.md
+### Одиночный запрос ведёт себя как ANNOTATED: разница видна только на одновременных промахах.
+### Их проверка — командами curl из docs/scenarios/09-cacheable-sync.md, раздел «Попробовать вручную».
+
+### 1. Сбросить счётчик источника и кэши
+POST http://localhost:8080/lab/reset
+
+### 2. Товар через @Cacheable(sync = true). Выполните несколько раз
+GET http://localhost:8080/products/2?via=ANNOTATED_SYNC
+
+### 3. sourceCalls = 1
+GET http://localhost:8080/lab/stats

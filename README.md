@@ -66,8 +66,6 @@ Spring Boot сам поднимет PostgreSQL из `compose.yaml`. Запрос
 
 Ловушка: `findPrice` вызывает `findById` через `this`, мимо прокси Spring, и кэш не работает — каждый вызов идёт в источник. Тот же вызов из другого бина (`ProductPriceQueries`) идёт через прокси и попадает в кэш.
 
-`sync = true`: без него 200 одновременных промахов вызывают метод 200 раз, с ним — один. Для `Mono` загрузка при `sync = true` начинается уже при вызове метода, без подписки.
-
 ### 4. TTL и устаревание
 
 Тест: `Scenario4TimeToLiveTest`. Подробно: [docs/scenarios/04-time-to-live.md](docs/scenarios/04-time-to-live.md), вручную: `http/04-time-to-live.http`.
@@ -94,7 +92,7 @@ Spring Boot сам поднимет PostgreSQL из `compose.yaml`. Запрос
 - наивный кэш («нет в кэше — загрузи и положи») — 200 обращений к источнику: все увидели пустой кэш раньше, чем первый его заполнил;
 - `AsyncCache.get(key, loader)` — одно обращение: остальные ждут ту же future.
 
-В `@Cacheable` то же даёт `sync = true`.
+В `@Cacheable` то же даёт `sync = true` — сценарий 9.
 
 ### 7. Refresh-Ahead и упавший источник
 
@@ -113,6 +111,17 @@ Spring Boot сам поднимет PostgreSQL из `compose.yaml`. Запрос
 Обычный `AsyncCache` не хранит `null`, поэтому запросы несуществующего товара каждый раз идут в источник (cache penetration). Отрицательный кэш хранит `Optional.empty()` с коротким TTL (30 секунд, через `Expiry.writing`), найденный товар — с длинным (10 минут).
 
 Цена: новый товар не виден, пока не истечёт отрицательная запись. Поэтому TTL для «нет» короткий, а при создании товара запись надо удалять.
+
+### 9. `@Cacheable(sync = true)`
+
+Тест: `Scenario9SyncCacheableTest`. Сервис: `SyncCacheableProductService`. Подробно: [docs/scenarios/09-cacheable-sync.md](docs/scenarios/09-cacheable-sync.md), вручную: `http/09-cacheable-sync.http`.
+
+200 одновременных промахов к холодному ключу:
+
+- `@Cacheable` без `sync` — 200 обращений к источнику: проверка кэша и запись разделены временем загрузки;
+- `@Cacheable(sync = true)` — одно обращение: Spring вызывает `Cache.retrieve(key, loader)`, Caffeine загружает значение один раз.
+
+Ловушка: для `Mono` загрузка при `sync = true` начинается уже при вызове метода, без подписки.
 
 ## Дальше
 
