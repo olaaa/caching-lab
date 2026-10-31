@@ -77,6 +77,8 @@ return adapter.fromPublisher(Mono.fromFuture(
 
 `cacheableWithoutSyncLetsEveryConcurrentMissThrough`: 200 одновременных чтений холодного товара через `AnnotatedProductService.findById` (без `sync`) — 200 обращений к источнику.
 
+Перевод имени: «`@Cacheable` без `sync` пропускает (к источнику) каждый из одновременных промахов». `let … through` — фразовый глагол «пропустить (сквозь себя)»: глагол `let` и частица `through` вместе дают одно значение. Дополнение можно поставить между ними: `lets every concurrent miss through` = `lets through every concurrent miss`. Если дополнение — местоимение, оно стоит только между ними: `let it through`, но не `let through it`. Так разделяются многие фразовые глаголы (`turn the light off` = `turn off the light`), но не все: `look after the kids` можно, `look the kids after` нельзя.
+
 `cacheableWithSyncCoalescesConcurrentMisses`: те же 200 чтений через `SyncCacheableProductService.findById` — одно обращение.
 
 `cacheableWithSyncStartsLoadingWithoutSubscription`:
