@@ -1,8 +1,5 @@
 package io.github.olaaa.cachinglab.scenario;
 
-import java.time.Duration;
-import java.util.Optional;
-
 import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
@@ -11,6 +8,9 @@ import io.github.olaaa.cachinglab.catalog.Product;
 import io.github.olaaa.cachinglab.catalog.ProductSource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
+import java.time.Duration;
+import java.util.Optional;
 
 /*
  * Сценарий 8. Отрицательный кэш: запоминаем и «товара нет».
@@ -40,10 +40,12 @@ public class NegativeCachingProductService implements LabCache {
     }
 
     public Mono<Product> findById(long id) {
-        return Mono.fromFuture(() -> cache.get(id, (key, executor) -> source.load(key)
-                        .map(Optional::of)
-                        .defaultIfEmpty(Optional.empty())
-                        .toFuture()), true)
+        return Mono.fromFuture(() -> cache.get(id,
+                        (key, executor) -> source.load(key)
+                                .map(value -> Optional.of(value))
+                                .defaultIfEmpty(Optional.empty())
+                                .toFuture()
+                ), true)
                 .flatMap(Mono::justOrEmpty);
     }
 
@@ -52,7 +54,8 @@ public class NegativeCachingProductService implements LabCache {
      * с огромным сроком, поэтому здесь видно и то, что загрузка ещё идёт.
      */
     public Optional<Duration> expiresAfter(long id) {
-        return cache.synchronous().policy().expireVariably().flatMap(expiration -> expiration.getExpiresAfter(id));
+        return cache.synchronous().policy().expireVariably()
+                .flatMap(expiration -> expiration.getExpiresAfter(id));
     }
 
     @Override

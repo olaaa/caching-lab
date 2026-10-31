@@ -45,6 +45,7 @@ class Scenario8NegativeCachingTest extends ScenarioTestSupport {
         assertThat(source.callCount()).isEqualTo(1);
     }
 
+//    negative entry — отрицательная запись
     @Test
     void newProductStaysHiddenUntilNegativeEntryExpires() {
         assertThat(negativeCachingProductService.findById(MISSING_ID).blockOptional()).isEmpty();
