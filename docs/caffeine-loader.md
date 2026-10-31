@@ -36,7 +36,7 @@ Caffeine различает кэши по двум признакам: зада�
 
 1. Одно место загрузки. Логика «как получить товар по id» описана один раз, при создании кэша. Её нельзя забыть или написать по-разному в двух сервисах.
 2. Защита от лавины промахов. `LoadingCache.get` и `Cache.get(key, function)` загружают ключ один раз, остальные запросы ждут результата. Наивный код «`getIfPresent`, при промахе загрузить и `put`» этого не даёт: все, кто пришёл до первого `put`, идут в источник (сценарий 6, `Scenario6StampedeTest`).
-3. Обновление без участия клиента. `refresh(key)` и `refreshAfterWrite` перечитывают значение в фоне, а для этого кэш должен сам знать, как его загрузить. Поэтому `refreshAfterWrite` без загрузчика не собирается: `build()` бросает `IllegalStateException` с текстом «refreshAfterWrite requires a LoadingCache» (тест `refreshAfterWriteRequiresLoader`, сценарий 7).
+3. Обновление без участия клиента. `refresh(key)` и `refreshAfterWrite` перечитывают значение в фоне, а для этого кэш должен сам знать, как его загрузить. Поэтому `refreshAfterWrite` без загрузчика не собирается: `build()` бросает `IllegalStateException` с текстом «refreshAfterWrite requires a LoadingCache» («refreshAfterWrite требует LoadingCache») (тест `refreshAfterWriteRequiresLoader`, сценарий 7).
 4. Пакетная загрузка. `getAll(keys)` отдаёт загрузчику сразу все отсутствующие ключи через `loadAll` — один запрос `WHERE id IN (…)` вместо N запросов (тест `getAllLoadsMissingKeysWithOneBulkCall`).
 
 В терминах шаблонов: кэш без загрузчика — Cache-Aside, приложение само ходит в источник. Кэш с загрузчиком — Read-Through: приложение спрашивает только кэш, а в источник ходит кэш.

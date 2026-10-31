@@ -26,7 +26,7 @@ public Mono<Product> findById(long id) {
 }
 ```
 
-С `sync = true` Spring вместо пары «прочитать, потом записать» вызывает одну операцию кэша `retrieve(key, valueLoader)`. Javadoc `Cache.retrieve`: «implementations should ensure that the loading operation is synchronized so that the specified valueLoader is only called once in case of concurrent access on the same key».
+С `sync = true` Spring вместо пары «прочитать, потом записать» вызывает одну операцию кэша `retrieve(key, valueLoader)`. Javadoc `Cache.retrieve`: «реализациям следует обеспечить синхронизацию загрузки, чтобы при одновременном обращении к одному ключу заданный valueLoader вызывался только один раз».
 
 `CaffeineCache` в асинхронном режиме превращает её в `AsyncCache.get(key, loader)` — тот же приём, что в сценарии 2. Первый промах кладёт в кэш future загрузки, остальные получают эту же future и ждут её. Источник вызывается один раз.
 
