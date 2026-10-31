@@ -70,6 +70,7 @@ class Scenario7RefreshAheadTest extends ScenarioTestSupport {
         StepVerifier.create(refreshAheadProductService.findById(KETTLE_ID))
                 .as("запись истекла — ошибка источника доходит до клиента")
                 .expectError(SourceUnavailableException.class)
+//  подписывается на Mono и блокирует тест с таймаутом, пока не придёт конечный сигнал
                 .verify(Duration.ofSeconds(5));
     }
 }
